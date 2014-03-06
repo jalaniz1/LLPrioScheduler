@@ -38,7 +38,7 @@ int addProcessEC(int tid, int priority){
 	else
 	{
 		struct node *ptr = head;
-		while(ptr->next and ptr->next->prio < priority)
+		while(ptr->next and ptr->next->prio <= priority)
 		{
 			ptr = ptr->next; // Move forward one
 		}
