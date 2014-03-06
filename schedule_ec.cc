@@ -6,7 +6,7 @@ struct node
 	int value;
 	int prio;
 	struct node *next;
-}*head;
+}*head, *last;
 
 /*
  * Function to add a process to the scheduler
@@ -70,20 +70,37 @@ int addProcessEC(int tid, int priority){
  * @Return true/false response for if the removal was successful
  */
 int removeProcessEC(int tid){
-	struct node *ptr = head;
-	while (ptr)
+	
+	
+	if (head->value == tid) // First node
 	{
-		if (ptr->value == tid) // We have our target
+		
+		struct node *tmp = head;
+		head = head->next;
+		free(tmp); // Delete the old head
+		return true;
+	}
+	else
+	{
+		
+		struct node *ptr = head;
+		while (ptr->next and ptr->next->value != tid)
 		{
-			struct node *tmp = ptr; // Save it for deletion
-			ptr = ptr->next; // Replace it
-			free(ptr);
+			ptr = ptr->next;
+		}
+		if (ptr->next == NULL)
+			return false; // Couldn't find it, end of list
+		else if (ptr->next->value == tid) // We must have found our target
+		{
+
+			struct node *tmp = ptr->next; // Save it
+			ptr->next = ptr->next->next; // Move it up one
+			free(tmp);
 			return true;
 		}
-
-		ptr = ptr->next;
 	}
-    return 0;
+	
+	return 0;
 }
 /*
  * Function to get the next process from the scheduler
@@ -91,7 +108,22 @@ int removeProcessEC(int tid){
  *      executed, returns -1 if there are no processes
  */
 int nextProcessEC(){
-	
+
+	if (last == NULL) // Initialize for the first time
+	{
+		last = head;
+		return last->value;
+	}
+
+	else
+	{
+		last = last->next; // Move it forward to the next one
+		if (last == NULL) 
+			last = head; // Reset
+		if (last != NULL)
+			return last->value;
+	}
+
     return -1;
 }
 
