@@ -213,7 +213,7 @@ int nextProcessEC(){
 		}
 		return n_array[cur_proc]->value;
 	}
-	    return -1; // We failed...
+	    return -1;// We must have failed!
 }
 
 
