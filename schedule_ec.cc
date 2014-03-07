@@ -5,8 +5,15 @@ struct node
 {
 	int value;
 	int prio;
+	int arr_index;  // Required for proper removal and deletion
 	struct node *next;
-}*head, *last;
+}*head, **n_array; // **n_array is a pointer to struct node pointers
+
+size_t group_size = 0;  // Keeps track of the max group sizes
+int cur_proc = 0; // Keeps track of the current proc
+ 
+
+
 
 /*
  * Function to add a process to the scheduler
@@ -23,6 +30,7 @@ int addProcessEC(int tid, int priority){
 		head = (struct node*)malloc(sizeof(struct node));
 		head->value = tid;
 		head->prio = priority;
+		head->arr_index = -1; // Initial Array index for removal
 		return true;
 	}
 	else if (head->prio > priority) // Second case, priority is lower
@@ -32,7 +40,8 @@ int addProcessEC(int tid, int priority){
 		head = (struct node *) malloc(sizeof(struct node));
 		head->value = tid;
 		head->prio = priority;
-		head->next = ptr;	
+		head->next = ptr;
+		head->arr_index = -1;	
 		return true;
 	}
 	else
@@ -44,10 +53,10 @@ int addProcessEC(int tid, int priority){
 		}
 		if (ptr->next == NULL) // If null then insert here
 		{
-		
 			ptr->next = (struct node *)malloc(sizeof(struct node));
 			ptr->next->value = tid;
 			ptr->next->prio = priority;
+			ptr->next->arr_index = -1;
 		}
 		else // Priority must be lower (higher)
 		{
@@ -56,6 +65,7 @@ int addProcessEC(int tid, int priority){
 			ptr->next = (struct node *)malloc(sizeof(struct node));
 			ptr->next->value = tid;
 			ptr->next->prio = priority;
+			ptr->next->arr_index = -1;
 			ptr->next->next = tmp; // Restore it
 		}
 		return true;
@@ -71,13 +81,27 @@ int addProcessEC(int tid, int priority){
  */
 int removeProcessEC(int tid){
 	
-	
+	/**** Modified version of the removal checks to see there is a node array (n_array)
+		index value associated with a pointer being removed.  If there is, then we
+		must free the n_array[i] node and set it to NULL for our nextProcessEC()
+		to work correctly.  Else, we aren't removing a node with an associated
+		struct node **n_array[index]
+	****/
 	if (head->value == tid) // First node
 	{
 		
 		struct node *tmp = head;
 		head = head->next;
-		free(tmp); // Delete the old head
+		if (tmp->arr_index != -1) // Delete the array spot as well
+		{
+			int i = tmp->arr_index;
+			free(n_array[i]);
+			n_array[i] = NULL;
+		}
+		else
+			free(tmp); // Delete the old head
+
+		tmp = NULL;
 		return true;
 	}
 	else
@@ -92,10 +116,19 @@ int removeProcessEC(int tid){
 			return false; // Couldn't find it, end of list
 		else if (ptr->next->value == tid) // We must have found our target
 		{
-
+			
 			struct node *tmp = ptr->next; // Save it
 			ptr->next = ptr->next->next; // Move it up one
-			free(tmp);
+
+			if (tmp->arr_index != -1) // Delete the array spot as well
+			{
+				int i = tmp->arr_index;
+				free(n_array[i]);
+				n_array[i] = NULL;
+			}
+			else
+				free(tmp); // Delete the old head
+			tmp = NULL;
 			return true;
 		}
 	}
@@ -108,24 +141,84 @@ int removeProcessEC(int tid){
  *      executed, returns -1 if there are no processes
  */
 int nextProcessEC(){
+	/**** First IF statement.  Here, if the node array(n_array) and head pointer exist.
+		Then we go through our n_array finding the next appropriate (and non-null)
+		process id to return.  Should the n_array be empty upon a previous deletion,
+		we will go to the second if statement to create *another* subgroup.
+		Implying by the time we enter this statement, a subgroup has already been created
+		previously ****/
 
-	if (last == NULL) // Initialize for the first time
+	if (n_array and head)
 	{
-		last = head;
-		return last->value;
+		int i =0;
+		bool empty = true; // Default empty
+		bool cur_set = false; // Default false, not set
+		if (cur_proc == group_size-1)
+		{
+			cur_proc = 0; // Reset before we hit the loop
+			
+			if(n_array[cur_proc]) // If it exists, go ahead and lock it
+			{
+				cur_set = true;
+				empty = false; // Not empty from the get go
+			}
+		}
+		for(;i < group_size;i++)
+		{
+			if (n_array[i] and !cur_set and cur_proc < i )
+			{
+				empty = false; // Not empty
+				cur_proc = i; // Cur proc is now equal to index of the for loop
+				break; // We no longer need to continue, break out for performance
+			}
+		}
+		
+		if (empty)// Our group is empty, it's been fully deleted. Reset for a new group
+		{
+			free(n_array); // Clean it and mark it for deletion
+			n_array = NULL; // Set it to NULL, reset
+			cur_proc = 0; // Reset current proc index
+		}
+		else			
+			return n_array[cur_proc]->value; // If not empty then we have a cur_proc to return
 	}
 
-	else
+	/**** Second IF statement, it is crucial to the algorithm that we do not make this else if.  
+		In case we require resetting the array, we can by going to this if statement 
+		Here in this IF statement block is where we make a new 'subgroup' of processes to run 
+		It is a First-Come First-Serve algorithm utilizing the priority queue to make subgroups ****/
+	
+	if (n_array == NULL and head) // (Re)Initialize n_array
 	{
-		last = last->next; // Move it forward to the next one
-		if (last == NULL) 
-			last = head; // Reset
-		if (last != NULL)
-			return last->value;
+		struct node *ptr = head;
+		group_size = 1; // Head's value accounted for
+		struct node * last = head; // Initialize last
+		head->arr_index = group_size-1; // Set array index of pointer for deletion and clean-up
+		n_array = (struct node **)malloc(group_size * sizeof(struct node*));
+		n_array[group_size-1] = last; // Last is set to head at this point
+	
+		while(ptr)
+		{
+			ptr = ptr->next; // Advance forward
+			while(ptr and ptr->prio == last->prio) // While ptr exists and ptr priority is equal to last priority
+				ptr = ptr->next; // Keep moving forward 
+			if (ptr) // Not at end of list
+			{
+				group_size += 1; // Add to our subgroup
+				last = ptr; // Our last ptr, in case we need it, is set to PTR
+				n_array = (struct node **)realloc(n_array, group_size * sizeof(struct node*)); // Re-size the array
+				n_array[group_size-1] = last; // Set it equal to last(ptr)
+				last->arr_index = group_size-1; // Set array index of pointer for deletion and clean-up
+			}
+		}
+		return n_array[cur_proc]->value;
 	}
-
-    return -1;
+	
+	
+	    return -1; // We failed...
 }
+
+
 
 void printAll()
 {

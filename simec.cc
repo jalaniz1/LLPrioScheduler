@@ -34,7 +34,7 @@ int main(int argc, char **argv){
     
     int process = 0;
     int remove = 0;
-    //printAll();
+ 
     for(int i=0;i<1000;i++){
         if(i!=0 && i%130==0){
             removeProcessEC(remove);
@@ -43,7 +43,7 @@ int main(int argc, char **argv){
 
         printf("Process %d executed\n", nextProcessEC());
     }
-   // printAll();
+   
     
     
     exit(0); //control never reaches here
