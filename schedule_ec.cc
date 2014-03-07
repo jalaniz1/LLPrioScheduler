@@ -41,7 +41,7 @@ int addProcessEC(int tid, int priority){
 		head->value = tid;
 		head->prio = priority;
 		head->next = ptr;
-		head->arr_index = -1;	
+		head->arr_index = -1; // Initial Array index for removal	
 		return true;
 	}
 	else
@@ -56,7 +56,7 @@ int addProcessEC(int tid, int priority){
 			ptr->next = (struct node *)malloc(sizeof(struct node));
 			ptr->next->value = tid;
 			ptr->next->prio = priority;
-			ptr->next->arr_index = -1;
+			ptr->next->arr_index = -1;// Initial Array index for removal
 		}
 		else // Priority must be lower (higher)
 		{
@@ -65,7 +65,7 @@ int addProcessEC(int tid, int priority){
 			ptr->next = (struct node *)malloc(sizeof(struct node));
 			ptr->next->value = tid;
 			ptr->next->prio = priority;
-			ptr->next->arr_index = -1;
+			ptr->next->arr_index = -1; // Initial Array index for removal
 			ptr->next->next = tmp; // Restore it
 		}
 		return true;
@@ -213,8 +213,6 @@ int nextProcessEC(){
 		}
 		return n_array[cur_proc]->value;
 	}
-	
-	
 	    return -1; // We failed...
 }
 
