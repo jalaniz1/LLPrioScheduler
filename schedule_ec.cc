@@ -163,7 +163,7 @@ int nextProcessEC(){
 				empty = false; // Not empty from the get go
 			}
 		}
-		for(;i < group_size;i++)
+		for(;i < group_size and !cur_set;i++)
 		{
 			if (n_array[i] and !cur_set and cur_proc < i )
 			{
