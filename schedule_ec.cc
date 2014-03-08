@@ -145,8 +145,8 @@ int nextProcessEC(){
 		Then we go through our n_array finding the next appropriate (and non-null)
 		process id to return.  Should the n_array be empty upon a previous deletion,
 		we will go to the second if statement to create *another* subgroup.
-		Implying by the time we enter this statement, a subgroup has already been created
-		previously ****/
+		Implying by the time we enter this first IF statement, a subgroup has already been created
+		previously in the second IF statement  ****/
 
 	if (n_array and head)
 	{
