@@ -165,7 +165,7 @@ int nextProcessEC(){
 		}
 		for(;i < group_size and !cur_set;i++)
 		{
-			if (n_array[i] and !cur_set and cur_proc < i )
+			if (n_array[i] and cur_proc < i )
 			{
 				empty = false; // Not empty
 				cur_proc = i; // Cur proc is now equal to index of the for loop
