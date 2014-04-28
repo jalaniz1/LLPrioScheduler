@@ -114,7 +114,7 @@ int removeProcessEC(int tid){
 		}
 		if (ptr->next == NULL)
 			return false; // Couldn't find it, end of list
-		else if (ptr->next->value == tid) // We must have found our target
+		else if (ptr->next->value == tid) // Wehave found our target
 		{
 			
 			struct node *tmp = ptr->next; // Save it
@@ -127,7 +127,7 @@ int removeProcessEC(int tid){
 				n_array[i] = NULL;
 			}
 			else
-				free(tmp); // Delete the old head
+				free(tmp); // Delete
 			tmp = NULL;
 			return true;
 		}
